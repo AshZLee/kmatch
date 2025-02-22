@@ -603,3 +603,114 @@ new MutationObserver(() => {
     setTimeout(markViewedJobs, 500);
   }
 }).observe(document, { subtree: true, childList: true });
+
+// Function to check and highlight Dutch-related content
+function highlightDutchContent(element) {
+  if (!element) return;
+  
+  const text = element.textContent.toLowerCase();
+  const jobDetailsContainer = document.querySelector('#job-details div');
+  
+  // Also find the job title in the sidebar
+  const jobTitleContainer = document.querySelector('.jobs-unified-top-card__job-title');
+  
+  if (text.includes('nederlandse') || text.includes('dutch')) {
+      if (jobDetailsContainer) {
+          // Add "Dutch Required" label if it doesn't exist
+          let labelElement = jobDetailsContainer.querySelector('.dutch-requirement-label');
+          if (!labelElement) {
+              labelElement = document.createElement('div');
+              labelElement.className = 'dutch-requirement-label';
+              labelElement.innerHTML = `
+                  <div style="
+                      background-color: #ff4d4d;
+                      color: white;
+                      padding: 8px 12px;
+                      border-radius: 4px;
+                      display: inline-block;
+                      margin: 8px 0;
+                      font-weight: bold;
+                      font-size: 14px;
+                  ">
+                      🇳🇱 Dutch Required
+                  </div>
+              `;
+              jobDetailsContainer.insertBefore(labelElement, jobDetailsContainer.firstChild);
+          }
+          
+          // Add light gray background
+          jobDetailsContainer.style.backgroundColor = '#f5f5f5';
+          
+          // Add indicator to job title in sidebar
+          if (jobTitleContainer && !jobTitleContainer.querySelector('.dutch-indicator')) {
+              const sidebarIndicator = document.createElement('span');
+              sidebarIndicator.className = 'dutch-indicator';
+              sidebarIndicator.innerHTML = `
+                  <span style="
+                      background-color: #ff4d4d;
+                      color: white;
+                      padding: 2px 6px;
+                      border-radius: 3px;
+                      font-size: 12px;
+                      margin-left: 8px;
+                  ">
+                      🇳🇱 Dutch
+                  </span>
+              `;
+              jobTitleContainer.appendChild(sidebarIndicator);
+          }
+      }
+  } else {
+      // If no Dutch content, remove all styling and indicators
+      if (jobDetailsContainer) {
+          const label = jobDetailsContainer.querySelector('.dutch-requirement-label');
+          if (label) {
+              label.remove();
+          }
+          jobDetailsContainer.style.backgroundColor = '';
+          
+          // Remove sidebar indicator if exists
+          if (jobTitleContainer) {
+              const sidebarIndicator = jobTitleContainer.querySelector('.dutch-indicator');
+              if (sidebarIndicator) {
+                  sidebarIndicator.remove();
+              }
+          }
+      }
+  }
+}
+
+// Keep the existing observer setup
+const dutchContentObserver = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+      if (mutation.target.closest('#job-details')) {
+          const jobDescription = document.querySelector('#job-details div p');
+          highlightDutchContent(jobDescription);
+      }
+  });
+});
+
+function startObserving() {
+  const targetNode = document.querySelector('#job-details');
+  if (targetNode) {
+      dutchContentObserver.observe(targetNode, {
+          childList: true,
+          subtree: true,
+          characterData: true
+      });
+      
+      // Check initial content
+      const jobDescription = document.querySelector('#job-details div p');
+      highlightDutchContent(jobDescription);
+  }
+}
+
+// Initialize observer and add click handler
+document.addEventListener('DOMContentLoaded', startObserving);
+
+document.addEventListener('click', (event) => {
+  setTimeout(() => {
+      const jobDescription = document.querySelector('#job-details div p');
+      highlightDutchContent(jobDescription);
+  }, 500);
+});
