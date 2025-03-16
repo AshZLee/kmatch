@@ -693,3 +693,132 @@ document.addEventListener('click', (event) => {
       highlightDutchContent(jobDescription);
   }, 500);
 });
+
+// Function to add new time filter options
+function addTimeFilterOptions() {
+    // Find the time filter list
+    const timeFilterList = document.querySelector('ul.list-style-none.relative.search-reusables__collection-values-container');
+    if (!timeFilterList) return;
+
+    if (timeFilterList.querySelector('[data-kmatch-time-filter]')) {
+        updateSelectedState();
+        return;
+    }
+
+    timeFilterList.innerHTML = '';
+
+    // Define all options
+    const allOptions = [
+        { value: '86400', text: 'Past 24 hours' },
+        { value: '172800', text: 'Past 2 days' },
+        { value: '259200', text: 'Past 3 days' },
+        { value: '345600', text: 'Past 4 days' },
+        { value: '432000', text: 'Past 5 days' },
+        { value: '604800', text: 'Past week' },
+        { value: '2592000', text: 'Past month' }
+    ];
+
+    // Create and insert all options
+    allOptions.forEach(opt => {
+        const li = document.createElement('li');
+        li.className = 'search-reusables__collection-values-item';
+        li.setAttribute('data-kmatch-time-filter', opt.value);
+        li.innerHTML = `
+            <input name="date-posted-filter-value" 
+                   id="timePostedRange-r${opt.value}" 
+                   class="search-reusables__select-input" 
+                   type="radio" 
+                   value="r${opt.value}">
+            <label for="timePostedRange-r${opt.value}" class="search-reusables__value-label">
+                <p class="display-flex">
+                    <span class="t-14 t-black--light t-normal" aria-hidden="true">
+                        ${opt.text}
+                    </span>
+                    <span class="visually-hidden">
+                        Filter by ${opt.text}
+                    </span>
+                </p>
+            </label>
+        `;
+
+        // Add click handler
+        const input = li.querySelector('input');
+        input.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                updateButtonText(opt.text);
+                
+                // Update URL and reload
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('f_TPR', e.target.value);
+                window.location.href = currentUrl.toString();
+            }
+        });
+
+        timeFilterList.appendChild(li);
+    });
+
+    // Update initial state
+    updateSelectedState();
+}
+
+// Helper function to update button text
+function updateButtonText(text) {
+    const filterButton = document.querySelector('#searchFilter_timePostedRange');
+    if (!filterButton) return;
+
+    Array.from(filterButton.childNodes)
+        .filter(node => node.nodeType === 3)
+        .forEach(node => node.remove());
+
+    const textNode = document.createTextNode(text);
+    
+    const svgIcon = filterButton.querySelector('svg');
+    
+    if (svgIcon) {
+        filterButton.insertBefore(textNode, svgIcon);
+    } else {
+        filterButton.appendChild(textNode);
+    }
+}
+
+// Helper function to update selected state
+function updateSelectedState() {
+    const currentUrl = window.location.href;
+    const timeFilterList = document.querySelector('ul.list-style-none.relative.search-reusables__collection-values-container');
+    if (!timeFilterList) return;
+
+    const selectedInput = timeFilterList.querySelector('input[type="radio"]:checked');
+    if (selectedInput) {
+        const text = selectedInput.closest('li').querySelector('.t-14').textContent.trim();
+        updateButtonText(text);
+        return;
+    }
+
+    const inputs = timeFilterList.querySelectorAll('input[type="radio"]');
+    inputs.forEach(input => {
+        if (currentUrl.includes(input.value)) {
+            input.checked = true;
+            const text = input.closest('li').querySelector('.t-14').textContent.trim();
+            updateButtonText(text);
+        }
+    });
+}
+
+const filterObserver = new MutationObserver((mutations) => {
+    if (filterObserver.timeout) {
+        clearTimeout(filterObserver.timeout);
+    }
+    
+    filterObserver.timeout = setTimeout(() => {
+        const timeFilterList = document.querySelector('ul.list-style-none.relative.search-reusables__collection-values-container');
+        if (timeFilterList && !timeFilterList.querySelector('[data-kmatch-time-filter]')) {
+            addTimeFilterOptions();
+        }
+    }, 100);
+});
+
+// Start observing
+filterObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
