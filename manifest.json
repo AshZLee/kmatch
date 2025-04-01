@@ -26,10 +26,11 @@
     }
   ],
   "web_accessible_resources": [{
-    "resources": ["sponsors.json", "welcome.html"],
+    "resources": ["welcome.html"],
     "matches": ["<all_urls>"]
   }],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   }
 } 

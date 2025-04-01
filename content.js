@@ -8,16 +8,11 @@ let recognizedSponsors = new Map();
 const jobLanguageCache = new Map();
 
 // Load sponsors from JSON file
-fetch(chrome.runtime.getURL('sponsors.json'))
-  .then(response => response.json())
-  .then(data => {
-    // Convert the JSON object into a Map
-    Object.entries(data.sponsors).forEach(([key, variations]) => {
-      recognizedSponsors.set(key, variations);
-    });
-    console.log('Sponsors loaded:', recognizedSponsors.size);
-  })
-  .catch(error => console.error('Error loading sponsors:', error));
+chrome.runtime.sendMessage({action: "getSponsors"}, response => {
+  Object.entries(response).forEach(([key, variations]) => {
+    recognizedSponsors.set(key, variations);
+  });
+});
 
 // Main message handler for extension communication
 // Handles two types of messages:
